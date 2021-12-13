@@ -14,10 +14,10 @@ type Service struct {
 // Todo -
 type Todo struct {
 	gorm.Model
-	Slug    string
-	Body    string
-	Author  string
-	Created time.Time
+	Name        string
+	Description string
+	Is_complete *bool
+	Created     time.Time
 }
 
 // TodoService - the interface for the todo service
@@ -36,6 +36,15 @@ func NewService(db *gorm.DB) *Service {
 	}
 }
 
+// GetAllTodo - retrieves all todos from the database
+func (s *Service) GetAllTodos() ([]Todo, error) {
+	var todo []Todo
+	if result := s.DB.Find(&todo); result.Error != nil {
+		return todo, result.Error
+	}
+	return todo, nil
+}
+
 // GetTodo - retrieves Todo by their ID from the database
 func (s *Service) GetTodo(ID uint) (Todo, error) {
 	var todo Todo
@@ -43,15 +52,6 @@ func (s *Service) GetTodo(ID uint) (Todo, error) {
 		return Todo{}, result.Error
 	}
 	return todo, nil
-}
-
-// GetTodosBySlug - retrieves all todos by slug (path - /article/name/)
-func (s *Service) GetTodosBySlug(slug string) ([]Todo, error) {
-	var todos []Todo
-	if result := s.DB.Find(&todos).Where("slug = ?", slug); result.Error != nil {
-		return []Todo{}, result.Error
-	}
-	return todos, nil
 }
 
 // PostTodo - adds a new todo to the database
@@ -84,11 +84,11 @@ func (s *Service) DeleteTodo(ID uint) error {
 	return nil
 }
 
-// GetAllTodo - retrieves all todos from the database
-func (s *Service) GetAllTodos() ([]Todo, error) {
-	var todo []Todo
-	if result := s.DB.Find(&todo); result.Error != nil {
-		return todo, result.Error
-	}
-	return todo, nil
-}
+// GetTodosBySlug - retrieves all todos by slug (path - /article/name/)
+// func (s *Service) GetTodosBySlug(slug string) ([]Todo, error) {
+// 	var todos []Todo
+// 	if result := s.DB.Find(&todos).Where("slug = ?", slug); result.Error != nil {
+// 		return []Todo{}, result.Error
+// 	}
+// 	return todos, nil
+// }

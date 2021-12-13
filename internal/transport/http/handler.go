@@ -19,6 +19,7 @@ type Handler struct {
 // Response - object to store responce from API
 type Response struct {
 	Message string
+	Error   string
 }
 
 // NewHandler - returns a pointer to a Handler
@@ -40,9 +41,7 @@ func (h *Handler) SetupRoutes() {
 	h.Router.HandleFunc("/api/todo/{id}", h.DeleteTodo).Methods("DELETE")
 
 	h.Router.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusOK)
-		if err := json.NewEncoder(w).Encode(Response{Message: "I am Alive"}); err != nil {
+		if err := sendOkResponse(w, Response{Message: "I am Alive"}); err != nil {
 			panic(err)
 		}
 	})
@@ -50,22 +49,21 @@ func (h *Handler) SetupRoutes() {
 
 // GetTodo - retrieves Todo by ID
 func (h *Handler) GetTodo(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-
 	vars := mux.Vars(r)
 	id := vars["id"]
 
 	i, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
-		fmt.Fprintf(w, "Unable to parse UINT from ID")
+		sendErrorResponse(w, "Unable to parse UINT from ID", err)
+		return
 	}
 	todo, err := h.Service.GetTodo(uint(i))
 	if err != nil {
-		fmt.Fprintf(w, "Error Retrieving Todo by ID")
+		sendErrorResponse(w, "Error Retrieving Todo by ID", err)
+		return
 	}
 
-	if err := json.NewEncoder(w).Encode(todo); err != nil {
+	if err := sendOkResponse(w, todo); err != nil {
 		panic(err)
 	}
 
@@ -73,86 +71,97 @@ func (h *Handler) GetTodo(w http.ResponseWriter, r *http.Request) {
 
 // GetAllTodos - retrieves all todos from the database
 func (h *Handler) GetAllTodos(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-
 	todos, err := h.Service.GetAllTodos()
 	if err != nil {
-		fmt.Fprintf(w, "Failed to retrive all todos")
+		sendErrorResponse(w, "Failed to retrive all todos", err)
+		return
 	}
 
-	if err := json.NewEncoder(w).Encode(todos); err != nil {
+	if err := sendOkResponse(w, todos); err != nil {
 		panic(err)
 	}
 }
 
 // PostTodo - adds a new todo
 func (h *Handler) PostTodo(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-
 	var todo todo.Todo
 	if err := json.NewDecoder(r.Body).Decode(&todo); err != nil {
-		fmt.Fprintf(w, "Failed to decode JSON Body")
+		sendErrorResponse(w, "Failed to decode JSON Body", err)
+		return
 	}
 
 	todo, err := h.Service.PostTodo(todo)
 
 	if err != nil {
-		fmt.Fprintf(w, "Fail to post new todo")
+		sendErrorResponse(w, "Fail to post new todo", err)
+		return
 	}
 
-	if err := json.NewEncoder(w).Encode(todo); err != nil {
+	if err := sendOkResponse(w, todo); err != nil {
 		panic(err)
 	}
 }
 
 // UpdateTodo - Update a todo by ID
 func (h *Handler) UpdateTodo(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-
 	var todo todo.Todo
 	if err := json.NewDecoder(r.Body).Decode(&todo); err != nil {
-		fmt.Fprintf(w, "Failed to decode JSON Body")
+		sendErrorResponse(w, "Failed to decode JSON Body", err)
+		return
 	}
 
 	vars := mux.Vars(r)
 	id := vars["id"]
 	todoID, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
-		fmt.Fprintf(w, "Failed to parse uint from ID")
+		sendErrorResponse(w, "Failed to parse uint from ID", err)
+		return
 	}
 
 	todo, err = h.Service.UpdateTodo(uint(todoID), todo)
 
 	if err != nil {
-		fmt.Fprintf(w, "Faill to update todo")
+		sendErrorResponse(w, "Faill to update todo", err)
+		return
 	}
 
-	if err := json.NewEncoder(w).Encode(todo); err != nil {
+	if err := sendOkResponse(w, todo); err != nil {
 		panic(err)
 	}
 }
 
 // DeleteTodo - delete a todo by ID
 func (h *Handler) DeleteTodo(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-
 	vars := mux.Vars(r)
 	id := vars["id"]
 	todoID, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
-		fmt.Fprintf(w, "Faill to parse uint from ID")
+		sendErrorResponse(w, "Faill to parse uint from ID", err)
+		return
 	}
 
 	err = h.Service.DeleteTodo(uint(todoID))
 	if err != nil {
-		fmt.Fprintf(w, "Failed to delete todo by comment ID")
+		sendErrorResponse(w, "Failed to delete todo by comment ID", err)
+		return
 	}
 
-	if err := json.NewEncoder(w).Encode(Response{Message: "Successfully delete todo"}); err != nil {
+	if err = sendOkResponse(w, Response{Message: "Successfully Deleted"}); err != nil {
+		panic(err)
+	}
+}
+
+func sendOkResponse(w http.ResponseWriter, resp interface{}) error {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	return json.NewEncoder(w).Encode(resp)
+}
+
+// Error Helper Functions
+func sendErrorResponse(w http.ResponseWriter, message string, err error) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusInternalServerError)
+	if err := json.NewEncoder(w).Encode(Response{Message: message, Error: err.Error()}); err != nil {
 		panic(err)
 	}
 }
