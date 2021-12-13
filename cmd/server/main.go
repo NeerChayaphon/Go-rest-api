@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/NeerChayaphon/go-rest-api/internal/database"
 	transportHTTP "github.com/NeerChayaphon/go-rest-api/internal/transport/http"
 )
 
@@ -17,6 +18,12 @@ func (app *App) Run() error {
 
 	handler := transportHTTP.NewHandler()
 	handler.SetupRoutes()
+
+	var err error
+	_, err = database.NewDatabase()
+	if err != nil {
+		return err
+	}
 
 	if err := http.ListenAndServe(":8080", handler.Router); err != nil {
 		fmt.Println("Failed to set up server")
