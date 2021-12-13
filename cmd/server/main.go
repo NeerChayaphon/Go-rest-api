@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/NeerChayaphon/go-rest-api/internal/database"
+	"github.com/NeerChayaphon/go-rest-api/internal/todo"
 	transportHTTP "github.com/NeerChayaphon/go-rest-api/internal/transport/http"
 )
 
@@ -16,14 +17,20 @@ type App struct{}
 func (app *App) Run() error {
 	fmt.Println("Setting Up Our APP")
 
-	handler := transportHTTP.NewHandler()
-	handler.SetupRoutes()
-
 	var err error
-	_, err = database.NewDatabase()
+	db, err := database.NewDatabase()
 	if err != nil {
 		return err
 	}
+	database.MigrateDB(db)
+	if err != nil {
+		return err
+	}
+
+	todoService := todo.NewService(db)
+
+	handler := transportHTTP.NewHandler(todoService)
+	handler.SetupRoutes()
 
 	if err := http.ListenAndServe(":8080", handler.Router); err != nil {
 		fmt.Println("Failed to set up server")

@@ -10,6 +10,7 @@ import (
 
 // NewDatabase - returns a pointer to a new database connection
 func NewDatabase() (*gorm.DB, error) {
+	fmt.Println("Setting up new database connection")
 	dbUsername := os.Getenv("DB_USERNAME")
 	dbPassword := os.Getenv("DB_PASSWORD")
 	dbHost := os.Getenv("DB_HOST")
@@ -18,7 +19,7 @@ func NewDatabase() (*gorm.DB, error) {
 
 	// dbConnectionString := dbUsername + ":" + dbPassword + "@tcp(" + dbHost + ":" + strconv.Itoa(dbPort) + ")/" + dbTable
 	connectionString := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable", dbHost, dbPort, dbUsername, dbTable, dbPassword)
-	// fmt.Println(connectionString)
+	fmt.Println(connectionString)
 
 	db, err := gorm.Open("postgres", connectionString)
 	if err != nil {
