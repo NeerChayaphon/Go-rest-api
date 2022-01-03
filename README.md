@@ -1,6 +1,6 @@
 # TodoList-API-With-Go
 
-## Objective
+## Objectives
   1. To practice my Golang and Docker knowledge.
   2. Build Todo list RESTful API with Golang, Gorilla Mux router, GORM and PostgreSQL
   3. Containerization with Docker and docker-compose
