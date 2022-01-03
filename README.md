@@ -31,3 +31,8 @@ Bring down the containers:
 $ docker-compose down
 ```
 
+## TODO
+1. Add more testing
+2. CI/CD with Gitlab
+3. Add React Front-end
+4. Add filtering, sorting, pagination and field limiting
